@@ -1493,7 +1493,8 @@ const manualTestConnection = async (
             )}
 
             {/* LM-Studio Configuration Gear Icon */}
-            {(activeSelection === 'embedding' && embeddingProvider === 'lmstudio') && (
+            {((activeSelection === 'chat' && chatProvider === 'lmstudio') ||
+              (activeSelection === 'embedding' && embeddingProvider === 'lmstudio')) && (
               <Button
                 variant="outline"
                 accentColor="blue"
@@ -1850,15 +1851,16 @@ const manualTestConnection = async (
           )}
 
           {/* Expandable LM-Studio Configuration Container */}
-          {showLMStudioConfig && (activeSelection === 'embedding' && embeddingProvider === 'lmstudio') && (
+          {showLMStudioConfig && ((activeSelection === 'chat' && chatProvider === 'lmstudio') ||
+            (activeSelection === 'embedding' && embeddingProvider === 'lmstudio')) && (
             <div className="mt-4 p-4 bg-gradient-to-r from-blue-500/5 to-blue-600/5 border border-blue-500/20 rounded-lg shadow-[0_2px_8px_rgba(59,130,246,0.1)]">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-white text-lg font-semibold">
-                    LM-Studio Embedding Configuration
+                    LM-Studio {activeSelection === 'chat' ? 'Chat' : 'Embedding'} Configuration
                   </h3>
                   <p className="text-gray-400 text-sm">
-                    Configure LM-Studio instance for text embeddings
+                    Configure LM-Studio instance for {activeSelection === 'chat' ? 'chat completions' : 'text embeddings'}
                   </p>
                 </div>
                 <div className={`text-sm font-medium ${
@@ -1879,14 +1881,16 @@ const manualTestConnection = async (
 
                     <div className="mb-4">
                       <div className="text-gray-300 text-sm mb-1">Model:</div>
-                      <div className="text-white">{getDisplayedEmbeddingModel(ragSettings)}</div>
+                      <div className="text-white">
+                        {activeSelection === 'chat' ? getDisplayedChatModel(ragSettings) : getDisplayedEmbeddingModel(ragSettings)}
+                      </div>
                     </div>
 
                     <div className="text-gray-400 text-sm mb-4">
                       {lmstudioStatus.checking ? (
                         <Loader className="w-4 h-4 animate-spin inline mr-1" />
                       ) : null}
-                      LM-Studio embedding service
+                      LM-Studio {activeSelection === 'chat' ? 'chat' : 'embedding'} service
                     </div>
 
                     <div className="flex gap-2">
@@ -1907,7 +1911,7 @@ const manualTestConnection = async (
                             lmstudioInstanceConfig.url,
                             setLMStudioStatus,
                             lmstudioInstanceConfig.name,
-                            'embedding'
+                            activeSelection === 'chat' ? 'chat' : 'embedding'
                           );
                         }}
                         disabled={lmstudioStatus.checking}
@@ -1919,7 +1923,9 @@ const manualTestConnection = async (
                 ) : (
                   <div className="text-center py-8">
                     <div className="text-gray-400 text-sm mb-2">No LM-Studio instance configured</div>
-                    <div className="text-gray-500 text-xs mb-4">Configure an instance to use LM-Studio embedding features</div>
+                    <div className="text-gray-500 text-xs mb-4">
+                      Configure an instance to use LM-Studio {activeSelection === 'chat' ? 'chat' : 'embedding'} features
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1968,7 +1974,10 @@ const manualTestConnection = async (
                       <tr>
                         <td className="py-2 text-gray-400">Selected Model</td>
                         <td className="py-2 text-white">
-                          {getDisplayedEmbeddingModel(ragSettings) || <span className="text-gray-500 italic">Not configured</span>}
+                          {activeSelection === 'chat'
+                            ? (getDisplayedChatModel(ragSettings) || <span className="text-gray-500 italic">Not configured</span>)
+                            : (getDisplayedEmbeddingModel(ragSettings) || <span className="text-gray-500 italic">Not configured</span>)
+                          }
                         </td>
                       </tr>
                     </tbody>
