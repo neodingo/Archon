@@ -186,10 +186,12 @@ export const RAGSettings = ({
   const [showStorageSettings, setShowStorageSettings] = useState(false);
   const [showModelDiscoveryModal, setShowModelDiscoveryModal] = useState(false);
   const [showOllamaConfig, setShowOllamaConfig] = useState(false);
-  
+  const [showLMStudioConfig, setShowLMStudioConfig] = useState(false);
+
   // Edit modals state
   const [showEditLLMModal, setShowEditLLMModal] = useState(false);
   const [showEditEmbeddingModal, setShowEditEmbeddingModal] = useState(false);
+  const [showEditLMStudioModal, setShowEditLMStudioModal] = useState(false);
   
   // Model selection modals state
   const [showLLMModelSelectionModal, setShowLLMModelSelectionModal] = useState(false);
@@ -214,14 +216,19 @@ export const RAGSettings = ({
     url: ragSettings.LLM_BASE_URL || 'http://host.docker.internal:11434/v1'
   });
   const [embeddingInstanceConfig, setEmbeddingInstanceConfig] = useState({
-    name: '', 
+    name: '',
     url: ragSettings.OLLAMA_EMBEDDING_URL || 'http://host.docker.internal:11434/v1'
+  });
+  const [lmstudioInstanceConfig, setLMStudioInstanceConfig] = useState({
+    name: 'LM-Studio',
+    url: ragSettings.LMSTUDIO_BASE_URL || 'http://host.docker.internal:1234/v1'
   });
 
   // Update instance configs when ragSettings change (after loading from database)
   // Use refs to prevent infinite loops
   const lastLLMConfigRef = useRef({ url: '', name: '' });
   const lastEmbeddingConfigRef = useRef({ url: '', name: '' });
+  const lastLMStudioConfigRef = useRef({ url: '', name: '' });
   
   useEffect(() => {
     const newLLMUrl = ragSettings.LLM_BASE_URL || '';
@@ -262,6 +269,25 @@ export const RAGSettings = ({
       });
     }
   }, [ragSettings.OLLAMA_EMBEDDING_URL, ragSettings.OLLAMA_EMBEDDING_INSTANCE_NAME]);
+
+  useEffect(() => {
+    const newLMStudioUrl = ragSettings.LMSTUDIO_BASE_URL || '';
+
+    if (newLMStudioUrl !== lastLMStudioConfigRef.current.url) {
+      lastLMStudioConfigRef.current = { url: newLMStudioUrl, name: 'LM-Studio' };
+      setLMStudioInstanceConfig(prev => {
+        const newConfig = {
+          url: newLMStudioUrl || prev.url,
+          name: 'LM-Studio'
+        };
+        // Only update if actually different to prevent loops
+        if (newConfig.url !== prev.url) {
+          return newConfig;
+        }
+        return prev;
+      });
+    }
+  }, [ragSettings.LMSTUDIO_BASE_URL]);
 
   // Provider model persistence effects - separate for chat and embedding
   useEffect(() => {
@@ -444,6 +470,7 @@ export const RAGSettings = ({
   // Status tracking
   const [llmStatus, setLLMStatus] = useState({ online: false, responseTime: null, checking: false });
   const [embeddingStatus, setEmbeddingStatus] = useState({ online: false, responseTime: null, checking: false });
+  const [lmstudioStatus, setLMStudioStatus] = useState({ online: false, responseTime: null, checking: false });
   const llmRetryTimeoutRef = useRef<number | null>(null);
   const embeddingRetryTimeoutRef = useRef<number | null>(null);
   
@@ -1465,6 +1492,19 @@ const manualTestConnection = async (
               </Button>
             )}
 
+            {/* LM-Studio Configuration Gear Icon */}
+            {(activeSelection === 'embedding' && embeddingProvider === 'lmstudio') && (
+              <Button
+                variant="outline"
+                accentColor="blue"
+                icon={<Cog className={`w-4 h-4 mr-1 transition-transform ${showLMStudioConfig ? 'rotate-90' : ''}`} />}
+                className="whitespace-nowrap ml-4 border-blue-500 text-blue-400 hover:bg-blue-500/10"
+                onClick={() => setShowLMStudioConfig(!showLMStudioConfig)}
+              >
+                Config
+              </Button>
+            )}
+
             {/* Save Settings Button */}
             <Button
               variant="outline"
@@ -1482,7 +1522,9 @@ const manualTestConnection = async (
                     LLM_BASE_URL: llmInstanceConfig.url,
                     LLM_INSTANCE_NAME: llmInstanceConfig.name,
                     OLLAMA_EMBEDDING_URL: embeddingInstanceConfig.url,
-                    OLLAMA_EMBEDDING_INSTANCE_NAME: embeddingInstanceConfig.name
+                    OLLAMA_EMBEDDING_INSTANCE_NAME: embeddingInstanceConfig.name,
+                    LMSTUDIO_BASE_URL: lmstudioInstanceConfig.url,
+                    LMSTUDIO_INSTANCE_NAME: lmstudioInstanceConfig.name
                   };
 
                   await credentialsService.updateRagSettings(updatedSettings);
@@ -1800,6 +1842,145 @@ const manualTestConnection = async (
                           )}
                         </span>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Expandable LM-Studio Configuration Container */}
+          {showLMStudioConfig && (activeSelection === 'embedding' && embeddingProvider === 'lmstudio') && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-blue-500/5 to-blue-600/5 border border-blue-500/20 rounded-lg shadow-[0_2px_8px_rgba(59,130,246,0.1)]">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-white text-lg font-semibold">
+                    LM-Studio Embedding Configuration
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    Configure LM-Studio instance for text embeddings
+                  </p>
+                </div>
+                <div className={`text-sm font-medium ${
+                  lmstudioStatus.online ? "text-teal-400" : "text-red-400"
+                }`}>
+                  {lmstudioStatus.online ? "Online" : "Offline"}
+                </div>
+              </div>
+
+              {/* Configuration Content */}
+              <div className="bg-black/40 rounded-lg p-4 shadow-[0_2px_8px_rgba(59,130,246,0.1)]">
+                {lmstudioInstanceConfig.name && lmstudioInstanceConfig.url ? (
+                  <>
+                    <div className="mb-3">
+                      <div className="text-white font-medium mb-1">{lmstudioInstanceConfig.name}</div>
+                      <div className="text-gray-400 text-sm font-mono">{lmstudioInstanceConfig.url}</div>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="text-gray-300 text-sm mb-1">Model:</div>
+                      <div className="text-white">{getDisplayedEmbeddingModel(ragSettings)}</div>
+                    </div>
+
+                    <div className="text-gray-400 text-sm mb-4">
+                      {lmstudioStatus.checking ? (
+                        <Loader className="w-4 h-4 animate-spin inline mr-1" />
+                      ) : null}
+                      LM-Studio embedding service
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-300 border-blue-400 hover:bg-blue-500/10"
+                        onClick={() => setShowEditLMStudioModal(true)}
+                      >
+                        Edit Settings
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-300 border-blue-400 hover:bg-blue-500/10"
+                        onClick={async () => {
+                          const success = await manualTestConnection(
+                            lmstudioInstanceConfig.url,
+                            setLMStudioStatus,
+                            lmstudioInstanceConfig.name,
+                            'embedding'
+                          );
+                        }}
+                        disabled={lmstudioStatus.checking}
+                      >
+                        {lmstudioStatus.checking ? 'Testing...' : 'Test Connection'}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-gray-400 text-sm mb-2">No LM-Studio instance configured</div>
+                    <div className="text-gray-500 text-xs mb-4">Configure an instance to use LM-Studio embedding features</div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-300 border-blue-400 hover:bg-blue-500/10"
+                      onClick={() => setShowEditLMStudioModal(true)}
+                    >
+                      Add LM-Studio Instance
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Configuration Summary */}
+              <div className="bg-black/40 rounded-lg p-4 mt-4 shadow-[0_2px_8px_rgba(59,130,246,0.1)]">
+                <h4 className="text-white font-medium mb-3">LM-Studio Instance Summary</h4>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-600">
+                        <th className="text-left py-2 text-gray-300 font-medium">Configuration</th>
+                        <th className="text-left py-2 text-gray-300 font-medium">LM-Studio Instance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-600">
+                      <tr>
+                        <td className="py-2 text-gray-400">Instance Name</td>
+                        <td className="py-2 text-white">
+                          {lmstudioInstanceConfig.name || <span className="text-gray-500 italic">Not configured</span>}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-gray-400">Instance URL</td>
+                        <td className="py-2 text-white font-mono text-xs">
+                          {lmstudioInstanceConfig.url || <span className="text-gray-500 italic">Not configured</span>}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-gray-400">Status</td>
+                        <td className="py-2">
+                          <span className={lmstudioStatus.checking ? "text-yellow-400" : lmstudioStatus.online ? "text-teal-400" : "text-red-400"}>
+                            {lmstudioStatus.checking ? "Checking..." : lmstudioStatus.online ? `Online (${lmstudioStatus.responseTime}ms)` : "Offline"}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-gray-400">Selected Model</td>
+                        <td className="py-2 text-white">
+                          {getDisplayedEmbeddingModel(ragSettings) || <span className="text-gray-500 italic">Not configured</span>}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  {/* Instance Status */}
+                  <div className="mt-4 pt-3 border-t border-gray-600">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-300">LM-Studio Instance Status:</span>
+                      <span className={lmstudioStatus.online ? "text-teal-400 font-medium" : "text-red-400"}>
+                        {lmstudioStatus.online ? "✓ Ready" : "✗ Not Ready"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2249,7 +2430,7 @@ const manualTestConnection = async (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-20 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit Embedding Instance</h3>
-              
+
               <div className="space-y-4">
                 <Input
                   label="Instance Name"
@@ -2257,7 +2438,7 @@ const manualTestConnection = async (
                   onChange={(e) => setEmbeddingInstanceConfig({...embeddingInstanceConfig, name: e.target.value})}
                   placeholder="Enter instance name"
                 />
-                
+
                 <Input
                   label="Instance URL"
                   value={embeddingInstanceConfig.url}
@@ -2265,7 +2446,7 @@ const manualTestConnection = async (
                   placeholder="http://host.docker.internal:11434/v1"
                 />
               </div>
-              
+
               <div className="flex gap-2 mt-6">
                 <Button
                   variant="outline"
@@ -2296,6 +2477,62 @@ const manualTestConnection = async (
                   }}
                   className="flex-1"
                   accentColor="green"
+                >
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit LM-Studio Instance Modal */}
+        {showEditLMStudioModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-20 z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit LM-Studio Instance</h3>
+
+              <div className="space-y-4">
+                <Input
+                  label="Instance Name"
+                  value={lmstudioInstanceConfig.name}
+                  onChange={(e) => setLMStudioInstanceConfig({...lmstudioInstanceConfig, name: e.target.value})}
+                  placeholder="Enter instance name"
+                />
+
+                <Input
+                  label="Instance URL"
+                  value={lmstudioInstanceConfig.url}
+                  onChange={(e) => setLMStudioInstanceConfig({...lmstudioInstanceConfig, url: e.target.value})}
+                  placeholder="http://host.docker.internal:1234/v1"
+                />
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEditLMStudioModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    setRagSettings({...ragSettings, LMSTUDIO_BASE_URL: lmstudioInstanceConfig.url});
+                    setShowEditLMStudioModal(false);
+                    showToast('LM-Studio instance updated successfully', 'success');
+                    // Wait 1 second then automatically test connection
+                    setTimeout(() => {
+                      manualTestConnection(
+                        lmstudioInstanceConfig.url,
+                        setLMStudioStatus,
+                        lmstudioInstanceConfig.name,
+                        'embedding',
+                        { suppressToast: true }
+                      );
+                    }, 1000);
+                  }}
+                  className="flex-1"
+                  accentColor="blue"
                 >
                   Save Changes
                 </Button>

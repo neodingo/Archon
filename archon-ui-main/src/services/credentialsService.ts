@@ -23,6 +23,7 @@ export interface RagSettings {
   OLLAMA_EMBEDDING_URL?: string;
   OLLAMA_EMBEDDING_INSTANCE_NAME?: string;
   LMSTUDIO_BASE_URL?: string;
+  LMSTUDIO_INSTANCE_NAME?: string;
   EMBEDDING_MODEL?: string;
   EMBEDDING_PROVIDER?: string;
   // Crawling Performance Settings
