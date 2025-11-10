@@ -104,6 +104,46 @@ class OpenAICompatibleEmbeddingAdapter(EmbeddingProviderAdapter):
         return [item.embedding for item in response.data]
 
 
+class LMStudioEmbeddingAdapter(EmbeddingProviderAdapter):
+    """
+    Adapter for LM-Studio embedding provider.
+
+    LM-Studio does not currently support the 'dimensions' parameter in its OpenAI-compatible API
+    (see: https://github.com/lmstudio-ai/lms/issues/300).
+    This adapter works around that limitation by truncating embeddings client-side.
+    """
+
+    def __init__(self, client: Any):
+        self._client = client
+
+    async def create_embeddings(
+        self,
+        texts: list[str],
+        model: str,
+        dimensions: int | None = None,
+    ) -> list[list[float]]:
+        # Call the API without dimensions parameter (LM-Studio ignores it anyway)
+        request_args: dict[str, Any] = {
+            "model": model,
+            "input": texts,
+        }
+
+        response = await self._client.embeddings.create(**request_args)
+        embeddings = [item.embedding for item in response.data]
+
+        # If dimensions are specified and differ from returned dimensions, truncate
+        if dimensions is not None and dimensions > 0:
+            for i, embedding in enumerate(embeddings):
+                if len(embedding) > dimensions:
+                    # Truncate to requested dimensions (Matryoshka Representation Learning approach)
+                    embeddings[i] = embedding[:dimensions]
+                    search_logger.debug(
+                        f"Truncated LM-Studio embedding from {len(embedding)} to {dimensions} dimensions"
+                    )
+
+        return embeddings
+
+
 class GoogleEmbeddingAdapter(EmbeddingProviderAdapter):
     """Adapter for Google's native embedding endpoint."""
 
@@ -221,6 +261,8 @@ def _get_embedding_adapter(provider: str, client: Any) -> EmbeddingProviderAdapt
     provider_name = (provider or "").lower()
     if provider_name == "google":
         return GoogleEmbeddingAdapter()
+    elif provider_name == "lmstudio":
+        return LMStudioEmbeddingAdapter(client)
     return OpenAICompatibleEmbeddingAdapter(client)
 
 
