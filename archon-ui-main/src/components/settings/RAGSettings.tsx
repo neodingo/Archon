@@ -219,16 +219,21 @@ export const RAGSettings = ({
     name: '',
     url: ragSettings.OLLAMA_EMBEDDING_URL || 'http://host.docker.internal:11434/v1'
   });
-  const [lmstudioInstanceConfig, setLMStudioInstanceConfig] = useState({
-    name: 'LM-Studio',
-    url: ragSettings.LMSTUDIO_BASE_URL || 'http://host.docker.internal:1234/v1'
+  const [lmstudioChatInstanceConfig, setLMStudioChatInstanceConfig] = useState({
+    name: 'LM-Studio Chat',
+    url: ragSettings.LMSTUDIO_CHAT_BASE_URL || ragSettings.LMSTUDIO_BASE_URL || 'http://host.docker.internal:1234/v1'
+  });
+  const [lmstudioEmbeddingInstanceConfig, setLMStudioEmbeddingInstanceConfig] = useState({
+    name: 'LM-Studio Embedding',
+    url: ragSettings.LMSTUDIO_EMBEDDING_BASE_URL || ragSettings.LMSTUDIO_BASE_URL || 'http://host.docker.internal:1234/v1'
   });
 
   // Update instance configs when ragSettings change (after loading from database)
   // Use refs to prevent infinite loops
   const lastLLMConfigRef = useRef({ url: '', name: '' });
   const lastEmbeddingConfigRef = useRef({ url: '', name: '' });
-  const lastLMStudioConfigRef = useRef({ url: '', name: '' });
+  const lastLMStudioChatConfigRef = useRef({ url: '', name: '' });
+  const lastLMStudioEmbeddingConfigRef = useRef({ url: '', name: '' });
   
   useEffect(() => {
     const newLLMUrl = ragSettings.LLM_BASE_URL || '';
@@ -271,23 +276,44 @@ export const RAGSettings = ({
   }, [ragSettings.OLLAMA_EMBEDDING_URL, ragSettings.OLLAMA_EMBEDDING_INSTANCE_NAME]);
 
   useEffect(() => {
-    const newLMStudioUrl = ragSettings.LMSTUDIO_BASE_URL || '';
+    const newLMStudioChatUrl = ragSettings.LMSTUDIO_CHAT_BASE_URL || ragSettings.LMSTUDIO_BASE_URL || '';
+    const newLMStudioChatName = ragSettings.LMSTUDIO_CHAT_INSTANCE_NAME || 'LM-Studio Chat';
 
-    if (newLMStudioUrl !== lastLMStudioConfigRef.current.url) {
-      lastLMStudioConfigRef.current = { url: newLMStudioUrl, name: 'LM-Studio' };
-      setLMStudioInstanceConfig(prev => {
+    if (newLMStudioChatUrl !== lastLMStudioChatConfigRef.current.url || newLMStudioChatName !== lastLMStudioChatConfigRef.current.name) {
+      lastLMStudioChatConfigRef.current = { url: newLMStudioChatUrl, name: newLMStudioChatName };
+      setLMStudioChatInstanceConfig(prev => {
         const newConfig = {
-          url: newLMStudioUrl || prev.url,
-          name: 'LM-Studio'
+          url: newLMStudioChatUrl || prev.url,
+          name: newLMStudioChatName || prev.name
         };
         // Only update if actually different to prevent loops
-        if (newConfig.url !== prev.url) {
+        if (newConfig.url !== prev.url || newConfig.name !== prev.name) {
           return newConfig;
         }
         return prev;
       });
     }
-  }, [ragSettings.LMSTUDIO_BASE_URL]);
+  }, [ragSettings.LMSTUDIO_CHAT_BASE_URL, ragSettings.LMSTUDIO_CHAT_INSTANCE_NAME, ragSettings.LMSTUDIO_BASE_URL]);
+
+  useEffect(() => {
+    const newLMStudioEmbeddingUrl = ragSettings.LMSTUDIO_EMBEDDING_BASE_URL || ragSettings.LMSTUDIO_BASE_URL || '';
+    const newLMStudioEmbeddingName = ragSettings.LMSTUDIO_EMBEDDING_INSTANCE_NAME || 'LM-Studio Embedding';
+
+    if (newLMStudioEmbeddingUrl !== lastLMStudioEmbeddingConfigRef.current.url || newLMStudioEmbeddingName !== lastLMStudioEmbeddingConfigRef.current.name) {
+      lastLMStudioEmbeddingConfigRef.current = { url: newLMStudioEmbeddingUrl, name: newLMStudioEmbeddingName };
+      setLMStudioEmbeddingInstanceConfig(prev => {
+        const newConfig = {
+          url: newLMStudioEmbeddingUrl || prev.url,
+          name: newLMStudioEmbeddingName || prev.name
+        };
+        // Only update if actually different to prevent loops
+        if (newConfig.url !== prev.url || newConfig.name !== prev.name) {
+          return newConfig;
+        }
+        return prev;
+      });
+    }
+  }, [ragSettings.LMSTUDIO_EMBEDDING_BASE_URL, ragSettings.LMSTUDIO_EMBEDDING_INSTANCE_NAME, ragSettings.LMSTUDIO_BASE_URL]);
 
   // Provider model persistence effects - separate for chat and embedding
   useEffect(() => {
@@ -1524,8 +1550,10 @@ const manualTestConnection = async (
                     LLM_INSTANCE_NAME: llmInstanceConfig.name,
                     OLLAMA_EMBEDDING_URL: embeddingInstanceConfig.url,
                     OLLAMA_EMBEDDING_INSTANCE_NAME: embeddingInstanceConfig.name,
-                    LMSTUDIO_BASE_URL: lmstudioInstanceConfig.url,
-                    LMSTUDIO_INSTANCE_NAME: lmstudioInstanceConfig.name
+                    LMSTUDIO_CHAT_BASE_URL: lmstudioChatInstanceConfig.url,
+                    LMSTUDIO_CHAT_INSTANCE_NAME: lmstudioChatInstanceConfig.name,
+                    LMSTUDIO_EMBEDDING_BASE_URL: lmstudioEmbeddingInstanceConfig.url,
+                    LMSTUDIO_EMBEDDING_INSTANCE_NAME: lmstudioEmbeddingInstanceConfig.name
                   };
 
                   await credentialsService.updateRagSettings(updatedSettings);
@@ -1872,11 +1900,13 @@ const manualTestConnection = async (
 
               {/* Configuration Content */}
               <div className="bg-black/40 rounded-lg p-4 shadow-[0_2px_8px_rgba(59,130,246,0.1)]">
-                {lmstudioInstanceConfig.name && lmstudioInstanceConfig.url ? (
+                {(() => {
+                  const currentConfig = activeSelection === 'chat' ? lmstudioChatInstanceConfig : lmstudioEmbeddingInstanceConfig;
+                  return currentConfig.name && currentConfig.url ? (
                   <>
                     <div className="mb-3">
-                      <div className="text-white font-medium mb-1">{lmstudioInstanceConfig.name}</div>
-                      <div className="text-gray-400 text-sm font-mono">{lmstudioInstanceConfig.url}</div>
+                      <div className="text-white font-medium mb-1">{currentConfig.name}</div>
+                      <div className="text-gray-400 text-sm font-mono">{currentConfig.url}</div>
                     </div>
 
                     <div className="mb-4">
@@ -1908,9 +1938,9 @@ const manualTestConnection = async (
                         className="text-blue-300 border-blue-400 hover:bg-blue-500/10"
                         onClick={async () => {
                           const success = await manualTestConnection(
-                            lmstudioInstanceConfig.url,
+                            currentConfig.url,
                             setLMStudioStatus,
-                            lmstudioInstanceConfig.name,
+                            currentConfig.name,
                             activeSelection === 'chat' ? 'chat' : 'embedding'
                           );
                         }}
@@ -1935,7 +1965,8 @@ const manualTestConnection = async (
                       Add LM-Studio Instance
                     </Button>
                   </div>
-                )}
+                );
+                })()}
               </div>
 
               {/* Configuration Summary */}
@@ -1954,13 +1985,13 @@ const manualTestConnection = async (
                       <tr>
                         <td className="py-2 text-gray-400">Instance Name</td>
                         <td className="py-2 text-white">
-                          {lmstudioInstanceConfig.name || <span className="text-gray-500 italic">Not configured</span>}
+                          {(activeSelection === 'chat' ? lmstudioChatInstanceConfig.name : lmstudioEmbeddingInstanceConfig.name) || <span className="text-gray-500 italic">Not configured</span>}
                         </td>
                       </tr>
                       <tr>
                         <td className="py-2 text-gray-400">Instance URL</td>
                         <td className="py-2 text-white font-mono text-xs">
-                          {lmstudioInstanceConfig.url || <span className="text-gray-500 italic">Not configured</span>}
+                          {(activeSelection === 'chat' ? lmstudioChatInstanceConfig.url : lmstudioEmbeddingInstanceConfig.url) || <span className="text-gray-500 italic">Not configured</span>}
                         </td>
                       </tr>
                       <tr>
@@ -2495,23 +2526,30 @@ const manualTestConnection = async (
         )}
 
         {/* Edit LM-Studio Instance Modal */}
-        {showEditLMStudioModal && (
+        {showEditLMStudioModal && (() => {
+          const isChat = activeSelection === 'chat';
+          const currentConfig = isChat ? lmstudioChatInstanceConfig : lmstudioEmbeddingInstanceConfig;
+          const setCurrentConfig = isChat ? setLMStudioChatInstanceConfig : setLMStudioEmbeddingInstanceConfig;
+
+          return (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-20 z-50">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit LM-Studio Instance</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Edit LM-Studio {isChat ? 'Chat' : 'Embedding'} Instance
+              </h3>
 
               <div className="space-y-4">
                 <Input
                   label="Instance Name"
-                  value={lmstudioInstanceConfig.name}
-                  onChange={(e) => setLMStudioInstanceConfig({...lmstudioInstanceConfig, name: e.target.value})}
+                  value={currentConfig.name}
+                  onChange={(e) => setCurrentConfig({...currentConfig, name: e.target.value})}
                   placeholder="Enter instance name"
                 />
 
                 <Input
                   label="Instance URL"
-                  value={lmstudioInstanceConfig.url}
-                  onChange={(e) => setLMStudioInstanceConfig({...lmstudioInstanceConfig, url: e.target.value})}
+                  value={currentConfig.url}
+                  onChange={(e) => setCurrentConfig({...currentConfig, url: e.target.value})}
                   placeholder="http://host.docker.internal:1234/v1"
                 />
               </div>
@@ -2526,16 +2564,29 @@ const manualTestConnection = async (
                 </Button>
                 <Button
                   onClick={async () => {
-                    setRagSettings({...ragSettings, LMSTUDIO_BASE_URL: lmstudioInstanceConfig.url});
+                    // Update the appropriate settings based on chat vs embedding
+                    if (isChat) {
+                      setRagSettings({
+                        ...ragSettings,
+                        LMSTUDIO_CHAT_BASE_URL: currentConfig.url,
+                        LMSTUDIO_CHAT_INSTANCE_NAME: currentConfig.name
+                      });
+                    } else {
+                      setRagSettings({
+                        ...ragSettings,
+                        LMSTUDIO_EMBEDDING_BASE_URL: currentConfig.url,
+                        LMSTUDIO_EMBEDDING_INSTANCE_NAME: currentConfig.name
+                      });
+                    }
                     setShowEditLMStudioModal(false);
-                    showToast('LM-Studio instance updated successfully', 'success');
+                    showToast(`LM-Studio ${isChat ? 'chat' : 'embedding'} instance updated successfully`, 'success');
                     // Wait 1 second then automatically test connection
                     setTimeout(() => {
                       manualTestConnection(
-                        lmstudioInstanceConfig.url,
+                        currentConfig.url,
                         setLMStudioStatus,
-                        lmstudioInstanceConfig.name,
-                        'embedding',
+                        currentConfig.name,
+                        isChat ? 'chat' : 'embedding',
                         { suppressToast: true }
                       );
                     }, 1000);
@@ -2548,7 +2599,8 @@ const manualTestConnection = async (
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* LLM Model Selection Modal */}
         {showLLMModelSelectionModal && (

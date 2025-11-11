@@ -24,6 +24,10 @@ export interface RagSettings {
   OLLAMA_EMBEDDING_INSTANCE_NAME?: string;
   LMSTUDIO_BASE_URL?: string;
   LMSTUDIO_INSTANCE_NAME?: string;
+  LMSTUDIO_CHAT_BASE_URL?: string;
+  LMSTUDIO_CHAT_INSTANCE_NAME?: string;
+  LMSTUDIO_EMBEDDING_BASE_URL?: string;
+  LMSTUDIO_EMBEDDING_INSTANCE_NAME?: string;
   EMBEDDING_MODEL?: string;
   EMBEDDING_PROVIDER?: string;
   // Crawling Performance Settings
@@ -204,6 +208,10 @@ class CredentialsService {
   OLLAMA_EMBEDDING_URL: "",
   OLLAMA_EMBEDDING_INSTANCE_NAME: "",
   LMSTUDIO_BASE_URL: "",
+  LMSTUDIO_CHAT_BASE_URL: "",
+  LMSTUDIO_CHAT_INSTANCE_NAME: "",
+  LMSTUDIO_EMBEDDING_BASE_URL: "",
+  LMSTUDIO_EMBEDDING_INSTANCE_NAME: "",
   EMBEDDING_PROVIDER: "openai",
   EMBEDDING_MODEL: "",
       // Crawling Performance Settings defaults
@@ -237,6 +245,10 @@ class CredentialsService {
             "OLLAMA_EMBEDDING_URL",
             "OLLAMA_EMBEDDING_INSTANCE_NAME",
             "LMSTUDIO_BASE_URL",
+            "LMSTUDIO_CHAT_BASE_URL",
+            "LMSTUDIO_CHAT_INSTANCE_NAME",
+            "LMSTUDIO_EMBEDDING_BASE_URL",
+            "LMSTUDIO_EMBEDDING_INSTANCE_NAME",
             "EMBEDDING_PROVIDER",
             "EMBEDDING_MODEL",
             "CRAWL_WAIT_STRATEGY",

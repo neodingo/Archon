@@ -467,7 +467,7 @@ class CredentialService:
             api_key = await self._get_provider_api_key(provider)
 
             # Get base URL if needed
-            base_url = self._get_provider_base_url(provider, rag_settings)
+            base_url = self._get_provider_base_url(provider, rag_settings, service_type)
 
             # Get models with provider-specific fallback logic
             chat_model = rag_settings.get("MODEL_CHOICE", "")
@@ -517,12 +517,38 @@ class CredentialService:
             return await self.get_credential(key_name)
         return "lm-studio" if provider == "lmstudio" else ("ollama" if provider == "ollama" else None)
 
-    def _get_provider_base_url(self, provider: str, rag_settings: dict) -> str | None:
-        """Get base URL for provider."""
+    def _get_provider_base_url(self, provider: str, rag_settings: dict, service_type: str = "llm") -> str | None:
+        """
+        Get base URL for provider.
+
+        Args:
+            provider: The provider name (e.g., 'ollama', 'lmstudio', 'openai')
+            rag_settings: Dictionary of RAG strategy settings
+            service_type: Either 'llm' or 'embedding' to determine which config to use
+
+        Returns:
+            The base URL for the provider, or None for default OpenAI
+        """
         if provider == "ollama":
-            return rag_settings.get("LLM_BASE_URL", "http://host.docker.internal:11434/v1")
+            # Ollama uses different URLs for chat vs embedding
+            if service_type == "embedding":
+                return rag_settings.get("OLLAMA_EMBEDDING_URL", rag_settings.get("LLM_BASE_URL", "http://host.docker.internal:11434/v1"))
+            else:
+                return rag_settings.get("LLM_BASE_URL", "http://host.docker.internal:11434/v1")
         elif provider == "lmstudio":
-            return rag_settings.get("LMSTUDIO_BASE_URL", "http://host.docker.internal:1234/v1")
+            # LM-Studio now supports separate URLs for chat vs embedding
+            if service_type == "embedding":
+                # Check for embedding-specific URL first, fallback to generic LMSTUDIO_BASE_URL for backward compatibility
+                return rag_settings.get(
+                    "LMSTUDIO_EMBEDDING_BASE_URL",
+                    rag_settings.get("LMSTUDIO_BASE_URL", "http://host.docker.internal:1234/v1")
+                )
+            else:
+                # Check for chat-specific URL first, fallback to generic LMSTUDIO_BASE_URL for backward compatibility
+                return rag_settings.get(
+                    "LMSTUDIO_CHAT_BASE_URL",
+                    rag_settings.get("LMSTUDIO_BASE_URL", "http://host.docker.internal:1234/v1")
+                )
         elif provider == "google":
             return "https://generativelanguage.googleapis.com/v1beta/openai/"
         elif provider == "openrouter":

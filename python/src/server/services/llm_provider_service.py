@@ -354,8 +354,9 @@ async def get_llm_client(
                 logger.debug("Using cached rag_strategy settings")
 
             # For Ollama, don't use the base_url from config - let _get_optimal_ollama_instance decide
+            service_type = "embedding" if use_embedding_provider else "llm"
             base_url = (
-                credential_service._get_provider_base_url(provider, rag_settings)
+                credential_service._get_provider_base_url(provider, rag_settings, service_type)
                 if provider != "ollama"
                 else None
             )
