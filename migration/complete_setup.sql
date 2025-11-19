@@ -136,8 +136,8 @@ ON CONFLICT (key) DO NOTHING;
 
 -- Crawling Performance Settings (from add_performance_settings.sql)
 INSERT INTO archon_settings (key, value, is_encrypted, category, description) VALUES
-('CRAWL_BATCH_SIZE', '50', false, 'rag_strategy', 'Number of URLs to crawl in parallel per batch (10-100)'),
-('CRAWL_MAX_CONCURRENT', '10', false, 'rag_strategy', 'Maximum concurrent browser sessions for crawling (1-20)'),
+('CRAWL_BATCH_SIZE', '200', false, 'rag_strategy', 'Number of URLs to crawl in parallel per batch (10-400)'),
+('CRAWL_MAX_CONCURRENT', '40', false, 'rag_strategy', 'Maximum concurrent browser sessions for crawling (1-80)'),
 ('CRAWL_WAIT_STRATEGY', 'domcontentloaded', false, 'rag_strategy', 'When to consider page loaded: domcontentloaded, networkidle, or load'),
 ('CRAWL_PAGE_TIMEOUT', '30000', false, 'rag_strategy', 'Maximum time to wait for page load in milliseconds'),
 ('CRAWL_DELAY_BEFORE_HTML', '0.5', false, 'rag_strategy', 'Time to wait for JavaScript rendering in seconds (0.1-5.0)')

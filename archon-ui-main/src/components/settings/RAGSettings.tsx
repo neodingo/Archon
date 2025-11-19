@@ -2191,15 +2191,15 @@ const manualTestConnection = async (
                   <input
                     type="number"
                     min="10"
-                    max="100"
-                    value={ragSettings.CRAWL_BATCH_SIZE || 50}
+                    max="400"
+                    value={ragSettings.CRAWL_BATCH_SIZE || 200}
                     onChange={e => setRagSettings({
                       ...ragSettings,
-                      CRAWL_BATCH_SIZE: parseInt(e.target.value, 10) || 50
+                      CRAWL_BATCH_SIZE: parseInt(e.target.value, 10) || 200
                     })}
                     className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">URLs to crawl in parallel (10-100)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">URLs to crawl in parallel (10-400)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -2208,15 +2208,15 @@ const manualTestConnection = async (
                   <input
                     type="number"
                     min="1"
-                    max="20"
-                    value={ragSettings.CRAWL_MAX_CONCURRENT || 10}
+                    max="80"
+                    value={ragSettings.CRAWL_MAX_CONCURRENT || 40}
                     onChange={e => setRagSettings({
                       ...ragSettings,
-                      CRAWL_MAX_CONCURRENT: parseInt(e.target.value, 10) || 10
+                      CRAWL_MAX_CONCURRENT: parseInt(e.target.value, 10) || 40
                     })}
                     className="w-full px-3 py-2 border border-green-500/30 rounded-md bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:border-green-500 focus:ring-1 focus:ring-green-500"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pages to crawl in parallel per operation (1-20)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Pages to crawl in parallel per operation (1-80)</p>
                 </div>
               </div>
               

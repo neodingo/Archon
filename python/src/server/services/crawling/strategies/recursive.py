@@ -97,9 +97,9 @@ class RecursiveCrawlStrategy:
             logger.error(
                 f"Failed to load crawl settings from database: {e}, using defaults", exc_info=True
             )
-            batch_size = 50
+            batch_size = 200
             if max_concurrent is None:
-                max_concurrent = 10  # Safe default to prevent memory issues
+                max_concurrent = 40  # Default for parallel crawling
             memory_threshold = 80.0
             check_interval = 0.5
             settings = {}  # Empty dict for defaults

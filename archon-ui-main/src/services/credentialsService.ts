@@ -215,8 +215,8 @@ class CredentialsService {
   EMBEDDING_PROVIDER: "openai",
   EMBEDDING_MODEL: "",
       // Crawling Performance Settings defaults
-      CRAWL_BATCH_SIZE: 50,
-      CRAWL_MAX_CONCURRENT: 10,
+      CRAWL_BATCH_SIZE: 200,
+      CRAWL_MAX_CONCURRENT: 40,
       CRAWL_WAIT_STRATEGY: "domcontentloaded",
       CRAWL_PAGE_TIMEOUT: 60000, // Increased from 30s to 60s for documentation sites
       CRAWL_DELAY_BEFORE_HTML: 0.5,
